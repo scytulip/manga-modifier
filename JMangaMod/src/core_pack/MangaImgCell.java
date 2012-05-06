@@ -15,26 +15,34 @@ import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 
 public class MangaImgCell {
+	
 	float numZoomFactor = 1;
 	int wImg = 0, hImg = 0, wxh = 0;
 	BufferedImage imgMangaOrg = null; // Original image
 	BufferedImage imgMangaMod = null; // Output canvas
-	List<boolean[]> lstDiagArea; // List of dialogue areas
+	
 	List<Point> lstDiagSrcPoint; // List of dialogue source (clicked) points
-	List<boolean[]> lstBkgArea; // List of background areas
+	byte[] aryDiagArea; // Marked dialogue area
+	
 	List<Point> lstBkgSrcPoint; // List of background source (clicked) points
-	boolean[] aryBkgArea; // Background area
+	byte[] aryBkgArea; // Marked background area
+	boolean bavBkg; // Background area is available? false if dialogues are marked again after marking background 
+	
 	int[] imgPixels; 
-
+	
 	public MangaImgCell() {
-		lstDiagArea = new ArrayList<boolean[]>();
 		lstDiagSrcPoint = new ArrayList<Point>();
-		lstBkgArea = new ArrayList<boolean[]>();
 		lstBkgSrcPoint = new ArrayList<Point>();
 	}
 
+	/**
+	 * Set the image file handle and read it into buffer.
+	 * @param img_file File object for read
+	 * @return Boolean value indicates successfuly file operation
+	 */
 	public boolean setImgFile(File img_file)
 	{
+
 		try {
 			imgMangaOrg = ImageIO.read(img_file);
 			
@@ -45,7 +53,8 @@ public class MangaImgCell {
 			
 			imgPixels = imgMangaOrg.getRGB(0, 0, wImg, hImg, null, 0, wImg);
 			
-			aryBkgArea = new boolean[wxh];
+			aryBkgArea = new byte[wxh];
+			aryDiagArea = new byte[wxh];
 			
 			imgMangaMod = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g = (Graphics2D)imgMangaMod.getGraphics();
@@ -63,167 +72,180 @@ public class MangaImgCell {
 			return false;
 		} finally {
 		}	
+		
 	}
 	
-	// Calculate dialogues' masks
+	/**
+	 * Calculate the manga dialogues' masks using region-filling algorithm
+	 * @param x X value of the clicked point
+	 * @param y Y value of the clicked point
+	 * @param th_A Alpha value tolerance
+	 * @param th_R Red value tolerance
+	 * @param th_G Green value tolerance
+	 * @param th_B Blue value tolerance
+	 * @param diagColor Color for filling dialogue masks
+	 */
 	public void addDialogueArea(int x, int y,
 			int th_A, int th_R, int th_G, int th_B, int diagColor) {
 		
-		// TODO Select & Deselect by using UnionSet
-		
-		boolean[] mask = new boolean[wxh];
-		Queue<Point> pt_queue = new LinkedList<Point>();
-		int pxColor = imgMangaOrg.getRGB(x, y); // Get clicked point color
-		
-		// Start from clicked point
-		Point pt = new Point(x,y);
-		lstDiagSrcPoint.add(pt);
-		pt_queue.add(pt);
-		mask[y*wImg + x] = true;
-		
-		// Expend from (x,y)
+		byte idx = aryDiagArea[y*wImg+x];
+		int j = 0;
 		int[] dx = {1, 1, 1, 0, 0, -1, -1, -1};
 		int[] dy = {1, 0, -1, 1, -1, 1, 0, -1};
-		int tx, ty, j, v;
+		int tx, ty, v;
 		
-		while (!pt_queue.isEmpty()) {
-			pt = pt_queue.poll();
+		if (bavBkg) {
+			bavBkg = false;
+			lstBkgSrcPoint.clear();
+			aryBkgArea = new byte[wxh];
+		}
+		
+		// Toggle marked/unmarked
+		if (idx>0)
+		{
+			lstDiagSrcPoint.remove(idx);
+			for (j=0;j<wxh;j++) {
+				if (aryDiagArea[j]==idx) {aryDiagArea[j] = 0;} 
+			}
+			for (j=0;j<wxh;j++) {
+				if (aryDiagArea[j]==idx) {aryDiagArea[j]--;}
+			}
 			
-			for (j=0; j<8; j++) {
-				tx = pt.x + dx[j];
-				ty = pt.y + dy[j];
-				if (tx>=0 && tx<wImg &&
-						ty>=0 && ty<hImg && !mask[ty*wImg+tx]) {
-					v = imgPixels[ty*wImg+tx];
-					v = Math.abs(v-pxColor);
-					if (((v & 0xff000000) >> 24) < th_A &&
-						((v & 0xff0000) >> 16) < th_R &&
-						((v & 0xff00) >>8) < th_G &&
-						(v & 0xff) < th_B
-					) {
-						pt_queue.add(new Point(tx,ty));
-						mask[ty*wImg+tx] = true;
+		} else if (idx==255){
+			JOptionPane.showMessageDialog(
+					null, "Max 255 dialogues marked", 
+					"Error", JOptionPane.ERROR_MESSAGE
+			);
+			
+		} else
+		{
+			idx = (byte) (lstDiagSrcPoint.size()+1);
+			
+			int pxColor = imgMangaOrg.getRGB(x, y); // Get clicked point color
+			
+			// Start from clicked point
+			Queue<Point> pt_queue = new LinkedList<Point>();
+			Point pt = new Point(x,y);
+			lstDiagSrcPoint.add(pt);
+			pt_queue.add(pt);
+			aryDiagArea[y*wImg + x] = idx;
+			
+			// Expend from (x,y)
+			while (!pt_queue.isEmpty()) {
+				pt = pt_queue.poll();
+				
+				for (j=0; j<8; j++) {
+					tx = pt.x + dx[j];
+					ty = pt.y + dy[j];
+					if (tx>=0 && tx<wImg &&
+							ty>=0 && ty<hImg && aryDiagArea[ty*wImg+tx]==0) {
+						v = imgPixels[ty*wImg+tx];
+						v = Math.abs(v-pxColor);
+						if (((v & 0xff000000) >> 24) < th_A &&
+							((v & 0xff0000) >> 16) < th_R &&
+							((v & 0xff00) >>8) < th_G &&
+							(v & 0xff) < th_B
+						) {
+							pt_queue.add(new Point(tx,ty));
+							aryDiagArea[ty*wImg+tx] = idx;
+						}
 					}
 				}
 			}
+			
+			// Paint mask
+			paintMask(diagColor,0);
 		}
-		
-		// Add to list
-		lstDiagArea.add(mask);
-		
-		// Paint mask
-		paintMask(diagColor,0);
 		
 	}
 	
-	// Calculate background area
+	/**
+	 * Calculate the manga background's masks using region-filling algorithm
+	 * @param x X value of the clicked point
+	 * @param y Y value of the clicked point
+	 * @param diagColor Color for filling dialogue masks
+	 * @param bkgColor Color for filling background masks
+	 */
 	public void addBackgroundArea(int x, int y, int diagColor, int bkgColor) {
 		
-		boolean[] m = getCombinedMask();
-		boolean[] mask = new boolean[wxh];
-		Queue<Point> pt_queue = new LinkedList<Point>();
-		
-		// Start from clicked point
-		Point pt = new Point(x,y);
-		lstBkgSrcPoint.add(pt);
-		pt_queue.add(pt);
-		mask[y*wImg + x] = true;
-		
-		// Expend from (x,y)
+		byte idx = aryBkgArea[y*wImg+x];
+		int j = 0;			
 		int[] dx = {1, 1, 1, 0, 0, -1, -1, -1};
 		int[] dy = {1, 0, -1, 1, -1, 1, 0, -1};
-		int tx, ty, j;
+		int tx, ty;
 		
-		while (!pt_queue.isEmpty()) {
-			pt = pt_queue.poll();
-			
-			for (j=0; j<8; j++) {
-				tx = pt.x + dx[j];
-				ty = pt.y + dy[j];
-				if (tx>=0 && tx<wImg &&
-						ty>=0 && ty<hImg && !mask[ty*wImg+tx]) {
-					if (!m[ty*wImg+tx]) {
-						pt_queue.add(new Point(tx,ty));
-						mask[ty*wImg+tx] = true;
+		bavBkg = true;
+		
+		// Toggle marked/unmarked
+		if (idx>0)
+		{
+			lstBkgSrcPoint.remove(idx);
+			for (j=0;j<wxh;j++) {
+				if (aryBkgArea[j]==idx) {aryDiagArea[j] = 0;} 
+			}
+			for (j=0;j<wxh;j++) {
+				if (aryBkgArea[j]==idx) {aryDiagArea[j]--;}
+			}
+
+		} else if (idx==255){
+			JOptionPane.showMessageDialog(
+					null, "Max 255 dialogues marked", 
+					"Error", JOptionPane.ERROR_MESSAGE
+					);
+
+		} else {
+
+			// Start from clicked point
+			idx = (byte)(lstBkgSrcPoint.size()+1);
+			Queue<Point> pt_queue = new LinkedList<Point>();
+			Point pt = new Point(x,y);
+			lstBkgSrcPoint.add(pt);
+			pt_queue.add(pt);
+			aryBkgArea[y*wImg + x] = idx;
+
+			// Expend from (x,y)
+
+
+			while (!pt_queue.isEmpty()) {
+				pt = pt_queue.poll();
+
+				for (j=0; j<8; j++) {
+					tx = pt.x + dx[j];
+					ty = pt.y + dy[j];
+					if (tx>=0 && tx<wImg &&
+							ty>=0 && ty<hImg && aryBkgArea[ty*wImg+tx]==0) {
+						if (aryDiagArea[ty*wImg+tx]==0) {
+							pt_queue.add(new Point(tx,ty));
+							aryBkgArea[ty*wImg+tx] = idx;
+						}
 					}
 				}
 			}
-		}
-		
-		// Add to list
-		lstBkgArea.add(mask);
-		
-		// Paint mask
-		paintMask(diagColor, bkgColor);
-		
-	}
-	
-	// Return WxH
-	public int getWidth() {
-		return wImg;
-	}
-	public int getHeight() {
-		return hImg;
-	}
-	
-	// Zoom operations
-	public void setZoomFactor(float zf) {
-		numZoomFactor = zf;
-	}
-	public float getZoomFactor() {
-		return numZoomFactor;
-	}
 
-	// Output modified image
-	public BufferedImage getOutputImage() {
-		return imgMangaMod;
-	}
-	
-	
-	// Combine all dialogue masks
-	private boolean[] getCombinedMask() {
-		boolean[] mask = new boolean[wxh];
-		boolean[] m = null;
-		Iterator<boolean[]> i = lstDiagArea.iterator();
-		int j;
-		
-		while (i.hasNext()) {
-			m = i.next();
-			for (j=0; j<wxh; j++) {mask[j] = mask[j]|m[j];}
+
+			// Paint mask
+			paintMask(diagColor, bkgColor);
 		}
 		
-		return mask;
 	}
 	
-	// Combine all dialogue masks
-	private boolean[] getCombinedBkg() {
-		boolean[] mask = new boolean[wxh];
-		boolean[] m = null;
-		Iterator<boolean[]> i = lstBkgArea.iterator();
-		int j;
-		
-		while (i.hasNext()) {
-			m = i.next();
-			for (j=0; j<wxh; j++) {mask[j] = mask[j]|m[j];}
-		}
-		
-		return mask;
-	}	
-	
-	// Paint a mask on target area
+	/**
+	 * Draw the mask covering dialogue and background areas
+	 * @param diagColor Mask color of dialogue areas
+	 * @param bkColor Mask color of background areas 
+	 */
 	private void paintMask(int diagColor, int bkColor) {
 	    
-	    boolean[] mask = getCombinedMask();
-	    boolean[] mask_b = getCombinedBkg();
+
 	    int[] buf_pic = new int[wxh];
 	    
 	    // Fill mask
 	    int j;
 	    for (j=0;j<wxh;j++) {
-	    	if (mask[j]) {
+	    	if (aryDiagArea[j]!=0) {
 	    		buf_pic[j] = diagColor;
 	    	}
-	    	if (mask_b[j]) {
+	    	if (aryBkgArea[j]!=0) {
 	    		buf_pic[j] = bkColor;
 	    	}
 	    }
@@ -240,16 +262,18 @@ public class MangaImgCell {
 		
 	}
 	
-	// Paint a mask on target area
+	/**
+	 * Fill dialogue areas with fillColor and clear all contents
+	 * @param fillColor Color for filling
+	 */
 	public void wipeDialogue(int fillColor) {
 	    
-	    boolean[] mask_b = getCombinedBkg();
 	    int[] buf_pic = new int[wxh];
 	    
 	    // Fill mask
 	    int j;
 	    for (j=0;j<wxh;j++) {
-	    	if (!mask_b[j]) {
+	    	if (aryBkgArea[j]==0) {
 	    		buf_pic[j] = fillColor;
 	    	}
 	    }
@@ -266,5 +290,30 @@ public class MangaImgCell {
 		
 	}
 	
+	/* Msc functions */
+	
+	// Return WxH
+	public int getWidth() {
+		return wImg;
+	}
+	public int getHeight() {
+		return hImg;
+	}
+
+	// Zoom operations
+	public void setZoomFactor(float zf) {
+		numZoomFactor = zf;
+	}
+	public float getZoomFactor() {
+		return numZoomFactor;
+	}
+
+	// Output modified image
+	public BufferedImage getOutputImage() {
+		return imgMangaMod;
+	}
+	
 }
+
+
 	

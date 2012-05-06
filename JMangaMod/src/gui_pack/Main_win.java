@@ -43,6 +43,9 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.ListSelectionModel;
 
 
 
@@ -122,7 +125,7 @@ public class Main_win {
 		frmMangaModifier.setMinimumSize(new Dimension(400, 400));
 		frmMangaModifier.getContentPane().setMinimumSize(new Dimension(300, 300));
 		frmMangaModifier.setTitle(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.frmMangaModifier.title")); //$NON-NLS-1$ //$NON-NLS-2$
-		frmMangaModifier.setBounds(100, 100, 722, 620);
+		frmMangaModifier.setBounds(100, 100, 722, 687);
 		frmMangaModifier.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmMangaModifier.getContentPane().setLayout(new BorderLayout(0, 0));
 		
@@ -146,7 +149,7 @@ public class Main_win {
 		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setResizeWeight(1.0);
-		frmMangaModifier.getContentPane().add(splitPane, BorderLayout.CENTER);
+		frmMangaModifier.getContentPane().add(splitPane);
 		
 		manga_vw = new ImageView(app_set);//Create a image view
 		mangaView = new JScrollPane(manga_vw);
@@ -272,31 +275,18 @@ public class Main_win {
 		btnWipe.setMnemonic('W');
 		panel_2.add(btnWipe, "cell 0 0,grow");
 		
-		JProgressBar progressBar = new JProgressBar();
-		panel_2.add(progressBar, "cell 0 1,grow");
+		JToolBar toolBar_FList = new JToolBar();
+		frmMangaModifier.getContentPane().add(toolBar_FList, BorderLayout.SOUTH);
 		
-		JPanel panelPtList = new JPanel();
-		tabbedTools.addTab(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.panel_3.arg0"), null, panelPtList, null); //$NON-NLS-1$ //$NON-NLS-2$
-		panelPtList.setLayout(new BorderLayout(0, 0));
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		toolBar_FList.add(scrollPane);
 		
-		JPanel panel_9 = new JPanel();
-		panelPtList.add(panel_9, BorderLayout.SOUTH);
-		panel_9.setLayout(new BorderLayout(0, 0));
-		
-		JButton btnNewButton = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton.text_6")); //$NON-NLS-1$ //$NON-NLS-2$
-		btnNewButton.setMnemonic('D');
-		panel_9.add(btnNewButton, BorderLayout.EAST);
-		
-		JScrollPane scrollPane_1 = new JScrollPane();
-		panelPtList.add(scrollPane_1, BorderLayout.CENTER);
-		
-		JList list = new JList();
-		list.setModel(new AbstractListModel() {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {""};
+		JList lst_Files_Preview = new JList();
+		lst_Files_Preview.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		lst_Files_Preview.setModel(new AbstractListModel() {
+			String[] values = new String[] {};
 			public int getSize() {
 				return values.length;
 			}
@@ -304,7 +294,8 @@ public class Main_win {
 				return values[index];
 			}
 		});
-		scrollPane_1.setViewportView(list);
+		lst_Files_Preview.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		scrollPane.setViewportView(lst_Files_Preview);
 		
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.setFocusTraversalKeysEnabled(true);
