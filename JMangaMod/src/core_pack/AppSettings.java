@@ -1,33 +1,41 @@
 package core_pack;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
+
 import javax.swing.Action;
 
 public class AppSettings {
 	
-	private boolean bFileOpened = false; // Sign: Current file is opened
-	private List<Action> lstEnAfterOpenFile = null; // List of actions to be enabled after file open
-	private int intMaxUnitIncrement = 1; //Max unit increment of the scrolling behavior
+	public static final int WS_IDLE = 0;
+	public static final int WS_MARK_DIAG = 1;
+	public static final int WS_MARK_BKG = 2;
 	
-	private boolean bBGMarked = false; // Sign: At least one Background is marked
-	private List<Action> lstEnAfterMarkBG = null; // List of actions to be enabled after marking background
+	List<Action> lstEnAfterOpenFile = null; // List of actions to be enabled after file open
 	
-	private boolean bMarkDial = false; // Sign: Dialogues could be marked
-	private boolean bMarkBG = false; // Sign: Background could be marked
+	boolean bFileOpened = false; // Sign: Current file is opened
 	
-	private int th_A = 5, th_R = 5, th_G = 5, th_B = 5; // RGB edge threshold values
+	int intMaxUnitIncrement = 30; //Max unit increment of the scrolling behavior
+	int th_A = 5, th_R = 5, th_G = 5, th_B = 5; // RGB edge threshold values
+	int wkStatus = 0; // Work space status
 	
-	public AppSettings() {
-		lstEnAfterOpenFile = new ArrayList<Action>();
-		lstEnAfterMarkBG = new ArrayList<Action>();
+	int colorDiagMask = 0x77ffff00; // Color of dialogue masks
+	int colorBkgMask = 0x770000ff; // Color of background masks
+	int colorFilling = 0xffffffff; // Color of dialogue filling
+	
+	// Work space status control
+	public int getWkStatus() {
+		return wkStatus;
+	}
+
+	public void setWkStatus(int wkStatus) {
+		this.wkStatus = wkStatus;
 	}
 	
 	// Initialization
 	public void initialize() {
 		setFileClosed();
-		setBGUnmarked();
 	}
 	
 	// File status marker
@@ -40,22 +48,9 @@ public class AppSettings {
 		disableActions(lstEnAfterOpenFile);
 	}
 	
-	// BGogue marking status
-	public void setBGMarked() { 
-		bBGMarked = true; 
-		enableActions(lstEnAfterMarkBG);
-	}
-	public void setBGUnmarked() { 
-		bBGMarked = false; 
-		disableActions(lstEnAfterMarkBG);
-	}
-	
 	// Set actions to be enabled/disable after file is opened/closed
 	public void addActEnAfterOpenFile(Action act) {
 		lstEnAfterOpenFile.add(act);
-	}
-	public void addActEnAfterMarkBG(Action act) {
-		lstEnAfterMarkBG.add(act);
 	}
 	
 	// Action operations
@@ -83,51 +78,41 @@ public class AppSettings {
 		this.intMaxUnitIncrement = intMaxUnitIncrement;
 	}
 
-	public int getTh_A() {
-		return th_A;
+	public int getTh_A() {return th_A;}
+	public void setTh_A(int th_A) {this.th_A = th_A;}
+	public int getTh_R() {return th_R;}
+	public void setTh_R(int th_R) {this.th_R = th_R;}
+	public int getTh_G() {return th_G;}
+	public void setTh_G(int th_G) {this.th_G = th_G;}
+	public int getTh_B() {return th_B;}
+	public void setTh_B(int th_B) {this.th_B = th_B;}
+
+	public int getColorDiagMask() {
+		return colorDiagMask;
 	}
 
-	public void setTh_A(int th_A) {
-		this.th_A = th_A;
+	public void setColorDiagMask(int colorDiagMask) {
+		this.colorDiagMask = colorDiagMask;
 	}
 
-	public int getTh_R() {
-		return th_R;
+	public int getColorBkgMask() {
+		return colorBkgMask;
 	}
 
-	public void setTh_R(int th_R) {
-		this.th_R = th_R;
+	public void setColorBkgMask(int colorBkgMask) {
+		this.colorBkgMask = colorBkgMask;
 	}
 
-	public int getTh_G() {
-		return th_G;
+	public int getColorFilling() {
+		return colorFilling;
 	}
 
-	public void setTh_G(int th_G) {
-		this.th_G = th_G;
+	public void setColorFilling(int colorFilling) {
+		this.colorFilling = colorFilling;
 	}
 
-	public int getTh_B() {
-		return th_B;
+	public AppSettings() {
+		lstEnAfterOpenFile = new ArrayList<Action>();
 	}
 
-	public void setTh_B(int th_B) {
-		this.th_B = th_B;
-	}
-
-	public boolean isMarkDial() {
-		return bMarkDial;
-	}
-
-	public void setMarkDial(boolean bMarkDial) {
-		this.bMarkDial = bMarkDial;
-	}
-
-	public boolean isMarkBG() {
-		return bMarkBG;
-	}
-
-	public void setMarkBG(boolean bMarkBG) {
-		this.bMarkBG = bMarkBG;
-	}
 }

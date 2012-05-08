@@ -1,31 +1,47 @@
 package gui_pack;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 
 import core_pack.AppSettings;
 import core_pack.MangaImgCell;
  
-//Scrollable view area of the manga pictures 
+/**
+ * Scrollable view area of the manga pictures 
+ * @author Tulip
+ *
+ */
 public class ImageView extends JComponent
                                implements Scrollable,
                                           MouseMotionListener,
                                           MouseListener {
  
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -2643088051135434118L;
-	private int maxUnitIncrement = 1;
+	static final long serialVersionUID = -2643088051135434118L;
+	int maxUnitIncrement = 1;
+	boolean bConLock = false; //Concurrent lock
     
-	private MangaImgCell man_cell;
-    private BufferedImage img_cell;
+	MangaImgCell man_cell;
+    BufferedImage img_cell;
     
-	private AppSettings app_set; // App config
+	AppSettings app_set; // App config
  
+	/**
+	 * Object contructor
+	 * @param aps Application settings
+	 */
     public ImageView(AppSettings aps) {
  
         //Let the user scroll by dragging to outside the window.
@@ -40,6 +56,10 @@ public class ImageView extends JComponent
         maxUnitIncrement = app_set.getIntMaxUnitIncrement();
     }
     
+    /**
+     * Repaint the display area
+     * @param man MangaImgCell oject
+     */
     public void setManga(MangaImgCell man)
     {
     	man_cell = man;
@@ -47,26 +67,91 @@ public class ImageView extends JComponent
     	repaint();
     }
  
-    //Methods required by the MouseMotionListener interface:
-    public void mouseMoved(MouseEvent e) {
-    	
-    }
-    
-    public void mouseDragged(MouseEvent e) {
-        //The user is dragging us, so scroll!
-        Rectangle r = new Rectangle(e.getX(), e.getY(), 1, 1);
-        scrollRectToVisible(r);
-    }
- 
-    public Dimension getPreferredSize() {
-        if (img_cell != null) {
-        	return new Dimension(img_cell.getWidth(null),
-        			img_cell.getHeight(null));
-        } else {
-        	return new Dimension(1,1);
-        }
-    }
-    
+    /**
+     * Action of wiping all marked dialogues
+     */
+	public void wipeDiag() {
+		if (!bConLock) {	
+			
+			Runnable runnable=new Runnable(){  
+				@Override  
+				public void run() {
+					setBusy();
+					try {
+						man_cell.wipeDialogue(app_set.getColorFilling());
+						img_cell = man_cell.getOutputImage();
+		    			repaint();
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(
+								null, e.getMessage(), "Error", 
+								JOptionPane.ERROR_MESSAGE
+						);
+					}
+	    			unsetBusy();
+				}
+			};	
+			new Thread(runnable).start();
+		}
+	}
+	
+	/**
+	 * Execute works on the canvas
+	 * @param tx X of the current position
+	 * @param ty Y of the current position
+	 */
+	public void actComponent(final int tx, final int ty) {
+		if (!bConLock)
+		{
+			Runnable runnable=new Runnable(){  
+				@Override  
+				public void run() {  
+					setBusy();
+					
+					try {
+						// Select operations according to current button status
+						switch(app_set.getWkStatus())
+						{
+							case AppSettings.WS_MARK_DIAG:
+							{
+								man_cell.addDialogueArea(
+										tx, ty,
+										app_set.getTh_A(),
+										app_set.getTh_R(),
+										app_set.getTh_G(),
+										app_set.getTh_B(),
+										app_set.getColorDiagMask()
+										);
+								img_cell = man_cell.getOutputImage();
+								repaint();
+								break;
+							}
+							case AppSettings.WS_MARK_BKG:
+							{
+								man_cell.addBackgroundArea(
+										tx, ty,
+										app_set.getColorDiagMask(),
+										app_set.getColorBkgMask()
+										);
+								img_cell = man_cell.getOutputImage();
+								repaint();
+								break;
+							}
+						}
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						
+					}
+
+					unsetBusy();
+				}
+			};
+			new Thread(runnable).start();
+		}
+	}
+	
+	/* ============= Component Interface ============ */
+	
     public void paintComponent(Graphics g) { //Customized paint function
     	Graphics2D g2d = (Graphics2D)g;
     	if (img_cell != null) {
@@ -77,7 +162,34 @@ public class ImageView extends JComponent
     		
     	}
     }
-    
+	
+	/* ================ Mouse Interface ============== */
+	
+    public void mouseDragged(MouseEvent e) {
+        //The user is dragging us, so scroll!
+        Rectangle r = new Rectangle(e.getX(), e.getY(), 1, 1);
+        scrollRectToVisible(r);
+    }
+
+	@Override
+    public void mouseClicked(MouseEvent e) {
+		final int tx = e.getX();
+		final int ty = e.getY();
+		
+		actComponent(tx, ty);
+    }
+	
+	/* ================ Scroll Interface ============= */
+	
+    public Dimension getPreferredSize() {
+        if (img_cell != null) {
+        	return new Dimension(img_cell.getWidth(null),
+        			img_cell.getHeight(null));
+        } else {
+        	return new Dimension(1,1);
+        }
+    }
+
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
@@ -127,7 +239,32 @@ public class ImageView extends JComponent
     public void setMaxUnitIncrement(int pixels) {
         maxUnitIncrement = pixels;
     }
-
+	
+	/* ============= Msc funtions ================== */
+	
+	/**
+	 * Set concurrent lock and set cursor to waiting
+	 */
+	private void setBusy() {
+		bConLock = true;
+		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+	}
+	
+	/**
+	 * Cancel concurrent lock and reset cursor to default
+	 */
+	private void unsetBusy() {
+		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		bConLock = false;
+	}
+	
+	// ================ Unused ======================= //
+	
+	@Override
+    public void mouseMoved(MouseEvent e) {
+    	
+    }
+    
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
 
@@ -146,59 +283,5 @@ public class ImageView extends JComponent
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 
-	}
-	
-	@Override
-    public void mouseClicked(MouseEvent e) {
-		final int tx = e.getX();
-		final int ty = e.getY();
-		Runnable runnable=new Runnable(){  
-			@Override  
-			public void run() {  
-				if (app_set.isMarkDial()) {
-					
-					man_cell.addDialogueArea(
-							tx, 
-							ty,
-							app_set.getTh_A(),
-							app_set.getTh_R(),
-							app_set.getTh_G(),
-							app_set.getTh_B(),
-							0x77ffff00
-					);
-					
-					img_cell = man_cell.getOutputImage();
-					repaint();
-    			
-				} else if (app_set.isMarkBG()) {
-					
-					man_cell.addBackgroundArea(
-							tx, 
-							ty,
-							0x77ffff00,
-							0x770000ff
-					);
-					
-					img_cell = man_cell.getOutputImage();
-	    			repaint();
-	    			app_set.setBGMarked();
-	    			
-				}
-			}
-		};
-		new Thread(runnable).start();
-    }
-	
-	// Wipe Dialogue
-	public void wipeDiag() {
-		Runnable runnable=new Runnable(){  
-			@Override  
-			public void run() {
-				man_cell.wipeDialogue(0xffffffff);
-				img_cell = man_cell.getOutputImage();
-    			repaint();
-			}
-		};
-		new Thread(runnable).start();
 	}
 }

@@ -11,7 +11,6 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
-import javax.swing.AbstractListModel;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -24,28 +23,25 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.miginfocom.swing.MigLayout;
-
 import core_pack.AppSettings;
 import core_pack.MangaImgCell;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.ListSelectionModel;
 
 
 
@@ -110,7 +106,7 @@ public class Main_win {
 	    app_set.addActEnAfterOpenFile(actSaveImg);
 	    app_set.addActEnAfterOpenFile(actMarkDial);
 	    app_set.addActEnAfterOpenFile(actMarkBG);
-	    app_set.addActEnAfterMarkBG(actWipe);
+	    app_set.addActEnAfterOpenFile(actWipe);
 	    app_set.initialize();
 	    
 	    initialize();
@@ -285,15 +281,7 @@ public class Main_win {
 		
 		JList lst_Files_Preview = new JList();
 		lst_Files_Preview.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lst_Files_Preview.setModel(new AbstractListModel() {
-			String[] values = new String[] {};
-			public int getSize() {
-				return values.length;
-			}
-			public Object getElementAt(int index) {
-				return values[index];
-			}
-		});
+
 		lst_Files_Preview.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		scrollPane.setViewportView(lst_Files_Preview);
 		
@@ -404,8 +392,7 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_M);
 		}
 		public void actionPerformed(ActionEvent e) {
-			app_set.setMarkDial(true);
-			app_set.setMarkBG(false);
+			app_set.setWkStatus(AppSettings.WS_MARK_DIAG);
 		}
 	}
 	private class SwingAction_3 extends AbstractAction {
@@ -422,8 +409,7 @@ public class Main_win {
 			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
 		}
 		public void actionPerformed(ActionEvent e) {
-			app_set.setMarkDial(false);
-			app_set.setMarkBG(true);
+			app_set.setWkStatus(AppSettings.WS_MARK_BKG);
 		}
 	}
 	private class SwingAction_4 extends AbstractAction {
