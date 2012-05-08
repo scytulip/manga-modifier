@@ -49,6 +49,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import javax.swing.Box;
 import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+import java.awt.Button;
 
 
 
