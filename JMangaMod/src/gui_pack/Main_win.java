@@ -42,15 +42,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import core_pack.AppSettings;
 import core_pack.MangaImgCell;
-import org.eclipse.wb.swing.FocusTraversalOnArray;
-import java.awt.Component;
-import javax.swing.AbstractListModel;
-import java.awt.FlowLayout;
+
 import java.awt.GridLayout;
-import javax.swing.Box;
 import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
-import java.awt.Button;
 
 
 
@@ -315,7 +309,6 @@ public class Main_win {
 		btnWipe.setAction(actWipe);
 		btnWipe.setMnemonic('W');
 		panel_2.add(btnWipe, "cell 0 0,grow");
-		panel_8.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{panel, panel_3, panel_4, label, btnMarkDig, lblRed, lblBlue, label_2, lblAlpha, spRed, spGreen, spBlue, spAlpha, panel_1, btnFillinBackground, panel_2, btnWipe}));
 		
 		JToolBar toolBar_FList = new JToolBar();
 		frmMangaModifier.getContentPane().add(toolBar_FList, BorderLayout.SOUTH);
@@ -332,7 +325,6 @@ public class Main_win {
 		scrollPane.setViewportView(lst_Files_Preview);
 		
 		JMenuBar menuBar = new JMenuBar();
-		menuBar.setFocusTraversalKeysEnabled(true);
 		menuBar.setFocusCycleRoot(true);
 		frmMangaModifier.setJMenuBar(menuBar);
 		
