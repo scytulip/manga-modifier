@@ -13,8 +13,13 @@ import java.util.Queue;
 import javax.imageio.ImageIO;
 
 public class MangaImgCell {
+	
+	String strFilePath = ""; // File path
+	String strFileName = ""; // File name
+	boolean bChanged; // Mark for any change on the image
+	boolean bavBkg; // Background area is available? false if dialogues are marked again after marking background 
 
-	float numZoomFactor = 1;
+	float zoomFactor = 1F;
 	int wImg = 0, hImg = 0, wxh = 0;
 	BufferedImage imgMangaOrg = null; // Original image
 	BufferedImage imgMangaMod = null; // Output canvas
@@ -28,14 +33,12 @@ public class MangaImgCell {
 
 	List<Point> lstBkgSrcPoint; // List of background source (clicked) points
 	byte[] aryBkgArea; // Marked background area
-	boolean bavBkg; // Background area is available? false if dialogues are marked again after marking background 
-
-	int[] imgPixels; 
 
 	public MangaImgCell() {
 		lstDiagSrcPoint = new ArrayList<Point>();
 		lstBkgSrcPoint = new ArrayList<Point>();
 		lstImgRec = new ArrayList<BufferedImage>();
+		bChanged = false;
 	}
 
 	/**
@@ -48,13 +51,15 @@ public class MangaImgCell {
 
 		try {
 			imgMangaOrg = ImageIO.read(img_file);
-
+			
 			// Initialization
+			bChanged = true;
+			strFilePath = img_file.getCanonicalPath();
+			strFileName = img_file.getName();
+
 			wImg = imgMangaOrg.getWidth();
 			hImg = imgMangaOrg.getHeight();
 			wxh = wImg*hImg;
-
-			imgPixels = imgMangaOrg.getRGB(0, 0, wImg, hImg, null, 0, wImg);
 
 			aryBkgArea = new byte[wxh];
 			aryDiagArea = new byte[wxh];
@@ -62,6 +67,7 @@ public class MangaImgCell {
 			imgMangaMod = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g = (Graphics2D)imgMangaMod.getGraphics();
 			g.drawImage(imgMangaOrg, 0, 0, null);
+			g.dispose();
 			
 			imgNewMask = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
 
@@ -91,12 +97,18 @@ public class MangaImgCell {
 			throws Exception
 	{
 
-		byte idx = aryDiagArea[y*wImg+x];
 		int j = 0;
 		int[] dx = {1, 1, 1, 0, 0, -1, -1, -1};
 		int[] dy = {1, 0, -1, 1, -1, 1, 0, -1};
 		int tx, ty, v;
-
+		
+		bChanged = true;
+		
+		x = (int)(Math.round(x / zoomFactor)); if (x>wImg) x = wImg;
+		y = (int)(Math.round(y / zoomFactor)); if (y>hImg) y = hImg;
+		 
+		byte idx = aryDiagArea[y*wImg+x];
+		
 		if (bavBkg) {
 			bavBkg = false;
 			lstBkgSrcPoint.clear();
@@ -131,6 +143,7 @@ public class MangaImgCell {
 			lstDiagSrcPoint.add(pt);
 			pt_queue.add(pt);
 			aryDiagArea[y*wImg + x] = idx;
+			int[] imgPixels = imgMangaOrg.getRGB(0, 0, wImg, hImg, null, 0, wImg);
 
 			// Expend from (x,y)
 			while (!pt_queue.isEmpty()) {
@@ -170,15 +183,22 @@ public class MangaImgCell {
 	 */
 	public void addBackgroundArea(int x, int y, int diagColor, int bkgColor) 
 		throws Exception {
-
-		byte idx = aryBkgArea[y*wImg+x];
+	
+		
 		int j = 0;			
 		int[] dx = {1, 1, 1, 0, 0, -1, -1, -1};
 		int[] dy = {1, 0, -1, 1, -1, 1, 0, -1};
 		int tx, ty;
+		
+		bChanged = true;
 
 		bavBkg = true;
+		
+		x = (int)(Math.round(x / zoomFactor)); if (x>wImg) x = wImg;
+		y = (int)(Math.round(y / zoomFactor)); if (y>hImg) y = hImg;
 
+		byte idx = aryBkgArea[y*wImg+x];
+		
 		// Toggle marked/unmarked
 		if (idx>0)
 		{
@@ -240,6 +260,8 @@ public class MangaImgCell {
 
 
 		int[] buf_pic = new int[wxh];
+		
+		bChanged = true;
 
 		// Fill mask
 		int j;
@@ -255,14 +277,13 @@ public class MangaImgCell {
 		// Convert to graphic
 		imgNewMask.setRGB(0, 0, wImg, hImg, buf_pic, 0, wImg);
 
+		retrieveOrg();
 		Graphics2D g2d = (Graphics2D)imgMangaMod.getGraphics();
-		g2d.clearRect(0, 0, wImg, hImg);
-		g2d.drawImage(imgMangaOrg, 0, 0, null);
 		g2d.drawImage(imgNewMask, 0, 0, null);
-
+		g2d.dispose();
 
 	}
-
+	
 	/**
 	 * Fill dialogue areas with fillColor and clear all contents
 	 * @param fillColor Color for filling
@@ -274,6 +295,8 @@ public class MangaImgCell {
 		if (lstBkgSrcPoint.size()==0) {
 			throw new Exception("Please define at least 1 background area.");
 		}
+		
+		bChanged = true;
 
 		// Fill mask
 		int j;
@@ -283,29 +306,98 @@ public class MangaImgCell {
 			}
 		}
 
-		// Save for undo
-		lstImgRec.add(imgMangaOrg);
-
 		// Convert to graphic
+		cancelAllMasks();
+		retrieveOrg();
 		imgNewMask.setRGB(0, 0, wImg, hImg, buf_pic, 0, wImg);
-		
 		Graphics2D g2d = (Graphics2D)imgMangaMod.getGraphics();
-		g2d.clearRect(0, 0, wImg, hImg);
-		g2d.drawImage(imgMangaOrg, 0, 0, null);
 		g2d.drawImage(imgNewMask, 0, 0, null);
+		g2d.dispose();
+		updateOrg();
+		
 
-		// Clear
+	}
+	
+	/**
+	 * Update original image with modified version
+	 * imgMangaOrg <- imgMangaMod
+	 */
+	private void updateOrg() {
+		
 		imgMangaOrg = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
-		g2d = (Graphics2D)imgMangaOrg.getGraphics();
+		Graphics2D g2d = (Graphics2D)imgMangaOrg.getGraphics();
 		g2d.drawImage(imgMangaMod, 0, 0, null);
+		g2d.dispose();
+		
+	}
+	
+	/**
+	 * Retrieve original image
+	 * imgMangaOrg -> imgMangaMod
+	 */
+	private void retrieveOrg() {
+		
+		imgMangaMod = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = (Graphics2D)imgMangaMod.getGraphics();
+		g2d.drawImage(imgMangaOrg, 0, 0, null);
+		g2d.dispose();
+		
+	}
+	
+	/**
+	 * Cancel all marked masks
+	 */
+	private void cancelAllMasks() {
+		
 		aryBkgArea = new byte[wxh];
 		aryDiagArea = new byte[wxh];
 		lstBkgSrcPoint.clear();
 		lstDiagSrcPoint.clear();
 		bavBkg = false;
-
+		
 	}
 
+	/**
+	 * Return the zoomed image for output
+	 * @return BufferedImage
+	 */
+	public BufferedImage getOutputImage() {
+		
+		BufferedImage imgOut = new BufferedImage(
+				(int)(Math.round(zoomFactor * wImg)),
+				(int)(Math.round(zoomFactor * hImg)),
+				BufferedImage.TYPE_INT_ARGB
+				);
+
+		Graphics2D g2d = (Graphics2D) imgOut.getGraphics();
+        g2d.scale(zoomFactor, zoomFactor);
+        g2d.drawImage(imgMangaMod, 0, 0, null);
+        g2d.dispose();
+        
+		return imgOut;
+	}
+	
+	/**
+	 * Return the preview icon of the manga image
+	 * @return BufferedImage
+	 */
+	public BufferedImage getPreviewIcon() {
+		
+		float zf = zoomFactor;
+		
+		if (wImg>hImg) {
+			setZoomFactor(wImg/128F);
+		} else 	{
+			setZoomFactor(hImg/128F);
+		}
+		BufferedImage img = getOutputImage();
+		setZoomFactor(zf);
+		
+		return img;
+	}
+	
+	
+	
 	/* Msc functions */
 
 	// Return WxH
@@ -318,16 +410,21 @@ public class MangaImgCell {
 
 	// Zoom operations
 	public void setZoomFactor(float zf) {
-		numZoomFactor = zf;
+		zoomFactor = (zf > 4F)? 4F: ((zf < 1/8F)? 1/8F : zf);
 	}
 	public float getZoomFactor() {
-		return numZoomFactor;
+		return zoomFactor;
+	}
+	
+	@Override
+	public String toString() {
+		return strFileName;
 	}
 
-	// Output modified image
-	public BufferedImage getOutputImage() {
-		return imgMangaMod;
+	public boolean isChanged() {
+		return bChanged;
 	}
+
 
 }
 

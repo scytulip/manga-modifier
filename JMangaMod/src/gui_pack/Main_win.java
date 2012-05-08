@@ -8,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
@@ -53,7 +55,7 @@ public class Main_win {
 	//Create a file chooser
 	private JFileChooser filech = null;
 	//Create a manga image cell to be displayed //TBD: image cell list
-	private MangaImgCell manga_pic = null;
+	private List<MangaImgCell> manga_pics = null;
 	//App configuration
 	private AppSettings app_set = null;
 	//Manga display area
@@ -109,6 +111,7 @@ public class Main_win {
 	            "GIF Images", "gif"));
 	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
 	            "JPEG Images", "jpg", "jpeg"));
+	    filech.setMultiSelectionEnabled(true);
 		
 	    // Setup global status
 	    app_set = new AppSettings();
@@ -116,7 +119,13 @@ public class Main_win {
 	    app_set.addActEnAfterOpenFile(actMarkDial);
 	    app_set.addActEnAfterOpenFile(actMarkBG);
 	    app_set.addActEnAfterOpenFile(actWipe);
+	    app_set.addActEnAfterOpenFile(actFileListNext);
+	    app_set.addActEnAfterOpenFile(actFileListPrev);
+	    app_set.addActEnAfterOpenFile(actSaveImgAs);
 	    app_set.initialize();
+	    
+	    // Initialize list
+	    manga_pics = new ArrayList<MangaImgCell>();
 	    
 	    initialize();
 		
@@ -408,16 +417,25 @@ public class Main_win {
 		public void actionPerformed(ActionEvent e) {
 			//In response to open a file
 			int returnVal = filech.showOpenDialog(frmMangaModifier);
+			int j;
+			MangaImgCell manga_cell;
 			
 			if (returnVal == JFileChooser.APPROVE_OPTION)
 			{
-				File img_list = filech.getSelectedFile();
-				manga_pic = new MangaImgCell();
-				if (manga_pic.setImgFile(img_list)) {
+				File[] img_list = filech.getSelectedFiles();
+				for (j=0; j<img_list.length; j++)
+				{
+					manga_cell = new MangaImgCell();
+					if (manga_cell.setImgFile(img_list[j])) {
+						manga_pics.add(manga_cell);
+					}
+					manga_cell = null;
+				}
+				if (manga_pics.size()>0) {
 					app_set.setFileOpened();
-					manga_vw.setManga(manga_pic);
+					manga_vw.setManga(manga_pics.get(0));
 					mangaView.revalidate();
-				}			
+				}
 			}
 		}
 	}
@@ -490,6 +508,10 @@ public class Main_win {
 		}
 	}
 	private class SwingAction_5 extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public SwingAction_5() {
 			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/filesaveas_L.png")));
@@ -502,6 +524,10 @@ public class Main_win {
 		}
 	}
 	private class SwingAction_6 extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public SwingAction_6() {
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/last_blue.png")));
 			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/last_blue.png")));
@@ -514,6 +540,10 @@ public class Main_win {
 		}
 	}
 	private class SwingAction_7 extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public SwingAction_7() {
 			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_MASK));
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/next_blue.png")));
@@ -526,6 +556,10 @@ public class Main_win {
 		}
 	}
 	private class SwingAction_8 extends AbstractAction {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public SwingAction_8() {
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/exit.png")));
 			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/exit.png")));

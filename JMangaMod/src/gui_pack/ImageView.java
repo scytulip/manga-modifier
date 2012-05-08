@@ -1,18 +1,23 @@
 package gui_pack;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ContainerListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 
-import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import javax.swing.JViewport;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
@@ -24,9 +29,10 @@ import core_pack.MangaImgCell;
  * @author Tulip
  *
  */
-public class ImageView extends JComponent
+public class ImageView extends JViewport
                                implements Scrollable,
                                           MouseMotionListener,
+                                          MouseWheelListener,
                                           MouseListener {
  
 	static final long serialVersionUID = -2643088051135434118L;
@@ -37,6 +43,8 @@ public class ImageView extends JComponent
     BufferedImage img_cell;
     
 	AppSettings app_set; // App config
+	
+	boolean isCtrlPressed = false; // Mark of Ctrl key
  
 	/**
 	 * Object contructor
@@ -48,6 +56,7 @@ public class ImageView extends JComponent
         setAutoscrolls(true); //enable synthetic drag events
         addMouseMotionListener(this); //handle mouse drags
         addMouseListener(this);
+        addMouseWheelListener(this); //handle mouse wheel
         
         //Initialization
         img_cell = null;
@@ -159,7 +168,7 @@ public class ImageView extends JComponent
     	} else {
     		g2d.setColor(Color.WHITE);
     		g2d.fillRect(0, 0, 1, 1);
-    		
+    		g2d.dispose();
     	}
     }
 	
@@ -175,9 +184,46 @@ public class ImageView extends JComponent
     public void mouseClicked(MouseEvent e) {
 		final int tx = e.getX();
 		final int ty = e.getY();
-		
-		actComponent(tx, ty);
+		switch(e.getButton())
+		{
+			case MouseEvent.BUTTON1: // Click button #1
+			{
+				actComponent(tx, ty);
+				break;
+			}
+		}
     }
+	
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		
+		float zf = 1;
+		
+		if (!bConLock) {
+			if (e.isControlDown()) {
+				setBusy();
+
+				if (e.getWheelRotation() < 0) {
+					zf = 1.25F;
+				} else if (e.getWheelRotation() > 0) {
+					zf = 1/1.25F;
+				}
+				man_cell.setZoomFactor(man_cell.getZoomFactor() * zf);
+				img_cell = man_cell.getOutputImage();
+				setSize(img_cell.getWidth(), img_cell.getHeight());
+				repaint();
+
+				setLocation(
+						new Point(0,0)
+						); // TODO: Keep the point under cursor the same
+
+				unsetBusy();
+			} else {
+				this.getParent().dispatchEvent(e);
+			}
+			
+		} 
+	}
 	
 	/* ================ Scroll Interface ============= */
 	
@@ -239,6 +285,7 @@ public class ImageView extends JComponent
     public void setMaxUnitIncrement(int pixels) {
         maxUnitIncrement = pixels;
     }
+    
 	
 	/* ============= Msc funtions ================== */
 	
@@ -280,8 +327,11 @@ public class ImageView extends JComponent
 
 	}
 
+
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 
 	}
+
+	
 }
