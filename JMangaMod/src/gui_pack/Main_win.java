@@ -42,27 +42,40 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import core_pack.AppSettings;
 import core_pack.MangaImgCell;
+import org.eclipse.wb.swing.FocusTraversalOnArray;
+import java.awt.Component;
+import javax.swing.AbstractListModel;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import javax.swing.Box;
+import javax.swing.JSeparator;
 
 
 
 public class Main_win {
+	
+	//Create a file chooser
+	private JFileChooser filech = null;
+	//Create a manga image cell to be displayed //TBD: image cell list
+	private MangaImgCell manga_pic = null;
+	//App configuration
+	private AppSettings app_set = null;
+	//Manga display area
+	private ImageView manga_vw;
 
 	private JFrame frmMangaModifier;
+	private JScrollPane mangaView;
 	private final Action actOpenFile = new SwingAction();
 	private final Action actSaveImg = new SwingAction_2();
 	private final Action actMarkDial = new SwingAction_1();
 	private final Action actMarkBG = new SwingAction_3();
 	private final Action actWipe = new SwingAction_4();
-	private JScrollPane mangaView;
+	private final Action actSaveImgAs = new SwingAction_5();
+	private final Action actFileListPrev = new SwingAction_6();
+	private final Action actFileListNext = new SwingAction_7();
+	private final Action actExit = new SwingAction_8();
 	
-	//Create a file chooser
-	JFileChooser filech = null;
-	//Create a manga image cell to be displayed //TBD: image cell list
-	MangaImgCell manga_pic = null;
-	//App configuration
-	AppSettings app_set = null;
-	//Manga display area
-	ImageView manga_vw;
+	
 
 	/**
 	 * Launch the application.
@@ -118,10 +131,10 @@ public class Main_win {
 	 */
 	private void initialize() {
 		frmMangaModifier = new JFrame();
-		frmMangaModifier.setMinimumSize(new Dimension(400, 400));
+		frmMangaModifier.setMinimumSize(new Dimension(600, 400));
 		frmMangaModifier.getContentPane().setMinimumSize(new Dimension(300, 300));
 		frmMangaModifier.setTitle(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.frmMangaModifier.title")); //$NON-NLS-1$ //$NON-NLS-2$
-		frmMangaModifier.setBounds(100, 100, 722, 687);
+		frmMangaModifier.setBounds(100, 100, 821, 687);
 		frmMangaModifier.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmMangaModifier.getContentPane().setLayout(new BorderLayout(0, 0));
 		
@@ -142,6 +155,11 @@ public class Main_win {
 		btnSaveFile.setAction(actSaveImg);
 		toolBar.add(btnSaveFile);
 		
+		JButton button = toolBar.add(actSaveImgAs);
+		button.setFocusPainted(false);
+		button.setFocusable(false);
+		button.setHideActionText(true);
+		
 		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setResizeWeight(1.0);
@@ -158,6 +176,31 @@ public class Main_win {
 		tabbedTools.setMinimumSize(new Dimension(230, 200));
 		tabbedTools.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		splitPane.setRightComponent(tabbedTools);
+		
+		JPanel panelFileList = new JPanel();
+		tabbedTools.addTab(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.panel_5.title"), null, panelFileList, null); //$NON-NLS-1$ //$NON-NLS-2$
+		panelFileList.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_6 = new JPanel();
+		panelFileList.add(panel_6, BorderLayout.SOUTH);
+		panel_6.setLayout(new GridLayout(0, 2, 0, 0));
+		
+		JButton btnBtnPrev = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton.text_9")); //$NON-NLS-1$ //$NON-NLS-2$
+		btnBtnPrev.setHideActionText(true);
+		btnBtnPrev.setAction(actFileListPrev);
+		panel_6.add(btnBtnPrev);
+		
+		JButton btnBtnNext = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton_1.text_1")); //$NON-NLS-1$ //$NON-NLS-2$
+		btnBtnNext.setHideActionText(true);
+		btnBtnNext.setAction(actFileListNext);
+		panel_6.add(btnBtnNext);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		panelFileList.add(scrollPane_1, BorderLayout.CENTER);
+		
+		JList listAllFiles = new JList();
+		listAllFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		scrollPane_1.setViewportView(listAllFiles);
 		
 		JPanel panelDigWiper = new JPanel();
 		tabbedTools.addTab(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.panelDigWiper.title"), null, panelDigWiper, null);
@@ -257,7 +300,7 @@ public class Main_win {
 			public void actionPerformed(ActionEvent arg0) {
 			}
 		});
-		panel_1.setLayout(new MigLayout("", "[188px]", "[57px]"));
+		panel_1.setLayout(new MigLayout("", "[grow,fill]", "[57px]"));
 		panel_1.add(btnFillinBackground, "cell 0 0,grow");
 		
 		JPanel panel_2 = new JPanel();
@@ -270,6 +313,7 @@ public class Main_win {
 		btnWipe.setAction(actWipe);
 		btnWipe.setMnemonic('W');
 		panel_2.add(btnWipe, "cell 0 0,grow");
+		panel_8.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{panel, panel_3, panel_4, label, btnMarkDig, lblRed, lblBlue, label_2, lblAlpha, spRed, spGreen, spBlue, spAlpha, panel_1, btnFillinBackground, panel_2, btnWipe}));
 		
 		JToolBar toolBar_FList = new JToolBar();
 		frmMangaModifier.getContentPane().add(toolBar_FList, BorderLayout.SOUTH);
@@ -301,6 +345,28 @@ public class Main_win {
 		JMenuItem mntmSaveFile = new JMenuItem(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mntmNewMenuItem.text_2")); //$NON-NLS-1$ //$NON-NLS-2$
 		mntmSaveFile.setAction(actSaveImg);
 		mnFile.add(mntmSaveFile);
+		
+		JMenuItem mntmSaveAs = new JMenuItem(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mntmNewMenuItem.text_4")); //$NON-NLS-1$ //$NON-NLS-2$
+		mntmSaveAs.setAction(actSaveImgAs);
+		mnFile.add(mntmSaveAs);
+		
+		JSeparator separator = new JSeparator();
+		mnFile.add(separator);
+		
+		JMenuItem mntmNewMenuItem = new JMenuItem(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mntmNewMenuItem.text_5")); //$NON-NLS-1$ //$NON-NLS-2$
+		mntmNewMenuItem.setAction(actFileListPrev);
+		mnFile.add(mntmNewMenuItem);
+		
+		JMenuItem menuItem = new JMenuItem("New menu item");
+		menuItem.setAction(actFileListNext);
+		mnFile.add(menuItem);
+		
+		JSeparator separator_1 = new JSeparator();
+		mnFile.add(separator_1);
+		
+		JMenuItem mntmExit = new JMenuItem(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mntmNewMenuItem_1.text_1")); //$NON-NLS-1$ //$NON-NLS-2$
+		mntmExit.setAction(actExit);
+		mnFile.add(mntmExit);
 		
 		JMenu mnEdit = new JMenu(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mnEdit.text")); //$NON-NLS-1$ //$NON-NLS-2$
 		mnEdit.setMnemonic('E');
@@ -427,6 +493,54 @@ public class Main_win {
 		}
 		public void actionPerformed(ActionEvent e) {
 			manga_vw.wipeDiag();
+		}
+	}
+	private class SwingAction_5 extends AbstractAction {
+		public SwingAction_5() {
+			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/filesaveas_L.png")));
+			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/filesaveas_L.png")));
+			putValue(NAME, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.action.name")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.action.short description")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(MNEMONIC_KEY, KeyEvent.VK_A);
+		}
+		public void actionPerformed(ActionEvent e) {
+		}
+	}
+	private class SwingAction_6 extends AbstractAction {
+		public SwingAction_6() {
+			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/last_blue.png")));
+			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/last_blue.png")));
+			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_MASK));
+			putValue(NAME, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actFileListPrev.name")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actFileListPrev.short description")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(MNEMONIC_KEY, KeyEvent.VK_V);
+		}
+		public void actionPerformed(ActionEvent e) {
+		}
+	}
+	private class SwingAction_7 extends AbstractAction {
+		public SwingAction_7() {
+			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_MASK));
+			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/next_blue.png")));
+			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/next_blue.png")));
+			putValue(NAME, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actFileListNext.name")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actFileListNext.short description")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(MNEMONIC_KEY, KeyEvent.VK_N);
+		}
+		public void actionPerformed(ActionEvent e) {
+		}
+	}
+	private class SwingAction_8 extends AbstractAction {
+		public SwingAction_8() {
+			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/exit.png")));
+			putValue(LARGE_ICON_KEY, new ImageIcon(Main_win.class.getResource("/app_res/exit.png")));
+			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK));
+			putValue(NAME, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actExit.name")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actExit.short description")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(MNEMONIC_KEY, KeyEvent.VK_X);
+		}
+		public void actionPerformed(ActionEvent e) {
 		}
 	}
 }
