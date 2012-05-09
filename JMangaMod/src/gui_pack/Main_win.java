@@ -15,6 +15,7 @@ import java.util.ResourceBundle;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -39,6 +40,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.miginfocom.swing.MigLayout;
@@ -47,22 +50,30 @@ import core_pack.MangaImgCell;
 
 import java.awt.GridLayout;
 import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 
 
 public class Main_win {
 	
+	// Tab indexes
+	final static int TAB_FILELIST = 0;
+	final static int TAB_WIPE = 1;
+	
 	//Create a file chooser
 	private JFileChooser filech = null;
 	//Create a manga image cell to be displayed //TBD: image cell list
-	private List<MangaImgCell> manga_pics = null;
+	private DefaultListModel manga_pics = null;
 	//App configuration
 	private AppSettings app_set = null;
 	//Manga display area
 	private ImageView manga_vw;
+	
 
 	private JFrame frmMangaModifier;
 	private JScrollPane mangaView;
+	private JList lvAllFiles;
+	private JTabbedPane tabbedTools;
 	private final Action actOpenFile = new SwingAction();
 	private final Action actSaveImg = new SwingAction_2();
 	private final Action actMarkDial = new SwingAction_1();
@@ -106,11 +117,11 @@ public class Main_win {
 	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
 	            "Bitmap Images", "bmp"));
 	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
-	            "PNG Images", "png"));
-	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
 	            "GIF Images", "gif"));
 	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
 	            "JPEG Images", "jpg", "jpeg"));
+	    filech.addChoosableFileFilter(new FileNameExtensionFilter(
+	            "PNG Images", "png"));
 	    filech.setMultiSelectionEnabled(true);
 		
 	    // Setup global status
@@ -124,9 +135,9 @@ public class Main_win {
 	    app_set.addActEnAfterOpenFile(actSaveImgAs);
 	    app_set.initialize();
 	    
-	    // Initialize list
-	    manga_pics = new ArrayList<MangaImgCell>();
-	    
+	    // Initialize image lists
+	    manga_pics = new DefaultListModel();
+	    		
 	    initialize();
 		
 	}
@@ -176,7 +187,7 @@ public class Main_win {
 		mangaView.setMinimumSize(new Dimension(200, 200));
 		splitPane.setLeftComponent(mangaView);
 		
-		JTabbedPane tabbedTools = new JTabbedPane(JTabbedPane.TOP);
+		tabbedTools = new JTabbedPane(JTabbedPane.TOP);
 		tabbedTools.setMaximumSize(new Dimension(230, 32767));
 		tabbedTools.setMinimumSize(new Dimension(230, 200));
 		tabbedTools.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -190,22 +201,29 @@ public class Main_win {
 		panelFileList.add(panel_6, BorderLayout.SOUTH);
 		panel_6.setLayout(new GridLayout(0, 2, 0, 0));
 		
-		JButton btnBtnPrev = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton.text_9")); //$NON-NLS-1$ //$NON-NLS-2$
+		JButton btnBtnPrev = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton.text_9"));
+		btnBtnPrev.setPreferredSize(new Dimension(60, 40));
 		btnBtnPrev.setHideActionText(true);
 		btnBtnPrev.setAction(actFileListPrev);
 		panel_6.add(btnBtnPrev);
 		
 		JButton btnBtnNext = new JButton(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.btnNewButton_1.text_1")); //$NON-NLS-1$ //$NON-NLS-2$
+		btnBtnNext.setPreferredSize(new Dimension(60, 40));
 		btnBtnNext.setHideActionText(true);
 		btnBtnNext.setAction(actFileListNext);
 		panel_6.add(btnBtnNext);
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setPreferredSize(new Dimension(100, 2));
 		panelFileList.add(scrollPane_1, BorderLayout.CENTER);
 		
-		JList listAllFiles = new JList();
-		listAllFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		scrollPane_1.setViewportView(listAllFiles);
+		lvAllFiles = new JList();
+		lvAllFiles.setVisibleRowCount(5);
+		lvAllFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		PreviewLabel k = new PreviewLabel(manga_vw, lvAllFiles);
+		lvAllFiles.setCellRenderer(k);
+		lvAllFiles.addListSelectionListener(k);
+		scrollPane_1.setViewportView(lvAllFiles);
 		
 		JPanel panelDigWiper = new JPanel();
 		tabbedTools.addTab(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.panelDigWiper.title"), null, panelDigWiper, null);
@@ -403,7 +421,7 @@ public class Main_win {
 
 	private class SwingAction extends AbstractAction {
 		/**
-		 * 
+		 * Action: Open file
 		 */
 		private static final long serialVersionUID = 1L;
 		public SwingAction() {
@@ -415,35 +433,39 @@ public class Main_win {
 			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actOpenFile.short description")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		public void actionPerformed(ActionEvent e) {
-			//In response to open a file
+			
 			int returnVal = filech.showOpenDialog(frmMangaModifier);
 			int j;
 			MangaImgCell manga_cell;
 			
 			if (returnVal == JFileChooser.APPROVE_OPTION)
 			{
+				tabbedTools.setSelectedIndex(TAB_FILELIST);
+				
 				File[] img_list = filech.getSelectedFiles();
+		
+				lvAllFiles.setModel(manga_pics);
+				
 				for (j=0; j<img_list.length; j++)
 				{
 					manga_cell = new MangaImgCell();
 					if (manga_cell.setImgFile(img_list[j])) {
-						manga_pics.add(manga_cell);
+						manga_pics.addElement(manga_cell);
+					} else {
+						manga_cell = null;
 					}
-					manga_cell = null;
 				}
 				if (manga_pics.size()>0) {
+					// TODO: Close files
 					app_set.setFileOpened();
-					manga_vw.setManga(manga_pics.get(0));
-					mangaView.revalidate();
+					lvAllFiles.setSelectedIndex(0);
 				}
 			}
 		}
 	}
 	
+	
 	private class SwingAction_2 extends AbstractAction {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 		public SwingAction_2() {
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/filesave_L.png")));
@@ -457,9 +479,6 @@ public class Main_win {
 		}
 	}
 	private class SwingAction_1 extends AbstractAction {
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 		public SwingAction_1() {
 			putValue(SMALL_ICON, new ImageIcon(Main_win.class.getResource("/app_res/diag.png")));
@@ -470,6 +489,7 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_M);
 		}
 		public void actionPerformed(ActionEvent e) {
+			tabbedTools.setSelectedIndex(TAB_WIPE);
 			app_set.setWkStatus(AppSettings.WS_MARK_DIAG);
 		}
 	}
@@ -487,6 +507,7 @@ public class Main_win {
 			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
 		}
 		public void actionPerformed(ActionEvent e) {
+			tabbedTools.setSelectedIndex(TAB_WIPE);
 			app_set.setWkStatus(AppSettings.WS_MARK_BKG);
 		}
 	}
@@ -504,6 +525,7 @@ public class Main_win {
 			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_MASK));
 		}
 		public void actionPerformed(ActionEvent e) {
+			tabbedTools.setSelectedIndex(TAB_WIPE);
 			manga_vw.wipeDiag();
 		}
 	}
@@ -537,6 +559,8 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_V);
 		}
 		public void actionPerformed(ActionEvent e) {
+			int idx = lvAllFiles.getSelectedIndex();
+			if (idx != -1 && idx > 0) { lvAllFiles.setSelectedIndex(idx-1); }
 		}
 	}
 	private class SwingAction_7 extends AbstractAction {
@@ -553,6 +577,8 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_N);
 		}
 		public void actionPerformed(ActionEvent e) {
+			int idx = lvAllFiles.getSelectedIndex();
+			if (idx != -1 && idx < manga_pics.size()-1) { lvAllFiles.setSelectedIndex(idx+1); }
 		}
 	}
 	private class SwingAction_8 extends AbstractAction {

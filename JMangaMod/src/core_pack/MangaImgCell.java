@@ -1,6 +1,7 @@
 package core_pack;
 
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -379,21 +380,23 @@ public class MangaImgCell {
 	
 	/**
 	 * Return the preview icon of the manga image
-	 * @return BufferedImage
+	 * @return Image
 	 */
-	public BufferedImage getPreviewIcon() {
+	public Image getPreviewIcon() {
 		
-		float zf = zoomFactor;
+		float zf;
 		
 		if (wImg>hImg) {
-			setZoomFactor(wImg/128F);
+			zf = 128F/wImg;
 		} else 	{
-			setZoomFactor(hImg/128F);
+			zf = 128F/hImg;
 		}
-		BufferedImage img = getOutputImage();
-		setZoomFactor(zf);
 		
-		return img;
+		int w = (int)(Math.round(zf * wImg));
+		int h = (int)(Math.round(zf * hImg));
+        
+		return imgMangaOrg.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+		
 	}
 	
 	

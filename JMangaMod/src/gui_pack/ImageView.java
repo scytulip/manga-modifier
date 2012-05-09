@@ -72,8 +72,8 @@ public class ImageView extends JViewport
     public void setManga(MangaImgCell man)
     {
     	man_cell = man;
-    	this.img_cell = man.getOutputImage();
-    	repaint();
+    	img_cell = man_cell.getOutputImage();
+    	revalidate();
     }
  
     /**
