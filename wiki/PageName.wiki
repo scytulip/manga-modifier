@@ -1,5 +1,5 @@
 #labels Manga,Introduction
-# JMangaMod - A fantastic tool for manga editors
+#JMangaMod - A fantastic tool for manga editors
 
 = Introduction =
 
