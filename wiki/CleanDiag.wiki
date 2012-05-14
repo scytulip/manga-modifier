@@ -1,5 +1,9 @@
 = Clean Dialogue Contents =
 
+Demo Video:
+
+<wiki:video url="http://www.youtube.com/watch?v=6Pgz-SNiNx0" width=600 height=480/>
+
  * First, mark the dialogue area. You can invoke this function in 3 ways,
    # Menu: Tools > Dialogue Wiper > Mark Dialogue
    # Click the "Wiper" panel on the right and click "Mark Dialogue"
