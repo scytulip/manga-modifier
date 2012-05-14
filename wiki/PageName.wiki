@@ -1,7 +1,7 @@
 #labels Manga,Introduction
-#JMangaMod - A fantastic tool for manga editors
+=JMangaMod - A fantastic tool for manga editors=
 
-= Introduction =
+== Introduction ==
 
 This is a light-weighted manga image processing app aiming at 
  * reducing the work load of manga editors
@@ -11,6 +11,6 @@ This is a light-weighted manga image processing app aiming at
 轻量级漫画图片专用处理程序，旨在减轻各位技术宅们的负担（特别适合于漫画修图哦 ^_^）
 
 
-= Major functions =
+== Function List ==
 
  * Clean dialogue contents / 修图-对话框内容清理
