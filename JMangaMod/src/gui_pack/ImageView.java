@@ -1,14 +1,12 @@
 package gui_pack;
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ContainerListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -52,7 +50,7 @@ public class ImageView extends JViewport
 	 */
     public ImageView(AppSettings aps) {
  
-        //Let the user scroll by dragging to outside the window.
+        /* Let the user scroll by dragging to outside the window. */
         setAutoscrolls(true); //enable synthetic drag events
         addMouseMotionListener(this); //handle mouse drags
         addMouseListener(this);
@@ -81,7 +79,7 @@ public class ImageView extends JViewport
      */
 	public void wipeDiag() {
 		if (!bConLock) {	
-			
+			/* Create wipe dialogue thread */
 			Runnable runnable=new Runnable(){  
 				@Override  
 				public void run() {
@@ -111,13 +109,14 @@ public class ImageView extends JViewport
 	public void actComponent(final int tx, final int ty) {
 		if (!bConLock)
 		{
+			/* Component Actions */
 			Runnable runnable=new Runnable(){  
 				@Override  
 				public void run() {  
 					setBusy();
 					
 					try {
-						// Select operations according to current button status
+						/* Select operations according to current button status */
 						switch(app_set.getWkStatus())
 						{
 							case AppSettings.WS_MARK_DIAG:
@@ -159,25 +158,57 @@ public class ImageView extends JViewport
 		}
 	}
 	
+	/* ============= Zoom Control =================== */
+	
+	/**
+	 * Auto fit according to the display area
+	 */
+	public void setZoomFit() {
+		Dimension d = this.getParent().getSize();
+		man_cell.setZoomFactorWH(d.width, d.height, 0);
+		img_cell = man_cell.getOutputImage();
+		repaint();
+	}
+	
+	/**
+	 * Zoom in image
+	 */
+	public void setZoomIn() {
+		man_cell.setZoomIn();
+		img_cell = man_cell.getOutputImage();
+		repaint();
+	}
+	
+	/**
+	 * Zoom out image
+	 */
+	public void setZoomOut() {
+		man_cell.setZoomOut();
+		img_cell = man_cell.getOutputImage();
+		repaint();
+	}
+	
 	/* ============= Component Interface ============ */
 	
     public void paintComponent(Graphics g) { //Customized paint function
     	Graphics2D g2d = (Graphics2D)g;
     	if (img_cell != null) {
     		g2d.drawImage(img_cell, null, 0, 0);
+    		setSize(img_cell.getWidth(), img_cell.getHeight()); // Resize canvas
     	} else {
     		g2d.setColor(Color.WHITE);
     		g2d.fillRect(0, 0, 1, 1);
     		g2d.dispose();
+    		setSize(1,1);
     	}
     }
 	
 	/* ================ Mouse Interface ============== */
-	
+	@Override
     public void mouseDragged(MouseEvent e) {
         //The user is dragging us, so scroll!
-        Rectangle r = new Rectangle(e.getX(), e.getY(), 1, 1);
-        scrollRectToVisible(r);
+        //Rectangle r = new Rectangle(e.getX(), e.getY(), 1, 1);
+        //scrollRectToVisible(r);
     }
 
 	@Override
@@ -197,20 +228,16 @@ public class ImageView extends JViewport
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		
-		float zf = 1;
-		
 		if (!bConLock) {
 			if (e.isControlDown()) {
 				setBusy();
 
 				if (e.getWheelRotation() < 0) {
-					zf = 1.25F;
+					man_cell.setZoomIn();
 				} else if (e.getWheelRotation() > 0) {
-					zf = 1/1.25F;
+					man_cell.setZoomOut();
 				}
-				man_cell.setZoomFactor(man_cell.getZoomFactor() * zf);
 				img_cell = man_cell.getOutputImage();
-				setSize(img_cell.getWidth(), img_cell.getHeight());
 				repaint();
 
 				setLocation(

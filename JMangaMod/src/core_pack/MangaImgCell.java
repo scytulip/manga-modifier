@@ -53,7 +53,7 @@ public class MangaImgCell {
 		try {
 			imgMangaOrg = ImageIO.read(img_file);
 			
-			// Initialization
+			/* Initialization */
 			bChanged = true;
 			strFilePath = img_file.getCanonicalPath();
 			strFileName = img_file.getName();
@@ -71,6 +71,7 @@ public class MangaImgCell {
 			g.dispose();
 			
 			imgNewMask = new BufferedImage(wImg, hImg,	BufferedImage.TYPE_INT_ARGB);
+			
 
 			return true;
 
@@ -116,7 +117,7 @@ public class MangaImgCell {
 			aryBkgArea = new byte[wxh];
 		}
 
-		// Toggle marked/unmarked
+		/* Toggle marked/unmarked */
 		if (idx>0)
 		{
 			lstDiagSrcPoint.remove(idx-1);
@@ -127,7 +128,7 @@ public class MangaImgCell {
 				if (aryDiagArea[j]>idx) {aryDiagArea[j]--;}
 			}
 			
-			// Paint mask
+			/* Paint mask */
 			paintMask(diagColor,0);
 
 		} else if (idx==127){
@@ -138,7 +139,7 @@ public class MangaImgCell {
 
 			int pxColor = imgMangaOrg.getRGB(x, y); // Get clicked point color
 
-			// Start from clicked point
+			/* Expand from clicked point */
 			Queue<Point> pt_queue = new LinkedList<Point>();
 			Point pt = new Point(x,y);
 			lstDiagSrcPoint.add(pt);
@@ -146,7 +147,6 @@ public class MangaImgCell {
 			aryDiagArea[y*wImg + x] = idx;
 			int[] imgPixels = imgMangaOrg.getRGB(0, 0, wImg, hImg, null, 0, wImg);
 
-			// Expend from (x,y)
 			while (!pt_queue.isEmpty()) {
 				pt = pt_queue.poll();
 
@@ -169,7 +169,7 @@ public class MangaImgCell {
 				}
 			}
 
-			// Paint mask
+			/* Paint mask */
 			paintMask(diagColor,0);
 		}
 
@@ -200,7 +200,7 @@ public class MangaImgCell {
 
 		byte idx = aryBkgArea[y*wImg+x];
 		
-		// Toggle marked/unmarked
+		/* Toggle marked/unmarked */
 		if (idx>0)
 		{
 			lstBkgSrcPoint.remove(idx-1);
@@ -211,23 +211,20 @@ public class MangaImgCell {
 				if (aryBkgArea[j]==idx) {aryDiagArea[j]--;}
 			}
 			
-			// Paint mask
+			/* Paint mask */
 			paintMask(diagColor, bkgColor);
 
 		} else if (idx==127){
 			throw new Exception("Max 127 dialogues marked");
 		} else {
 
-			// Start from clicked point
+			/* Expand from clicked point */
 			idx = (byte)(lstBkgSrcPoint.size()+1);
 			Queue<Point> pt_queue = new LinkedList<Point>();
 			Point pt = new Point(x,y);
 			lstBkgSrcPoint.add(pt);
 			pt_queue.add(pt);
 			aryBkgArea[y*wImg + x] = idx;
-
-			// Expend from (x,y)
-
 
 			while (!pt_queue.isEmpty()) {
 				pt = pt_queue.poll();
@@ -246,7 +243,7 @@ public class MangaImgCell {
 			}
 
 
-			// Paint mask
+			/* Paint mask */
 			paintMask(diagColor, bkgColor);
 		}
 
@@ -264,7 +261,7 @@ public class MangaImgCell {
 		
 		bChanged = true;
 
-		// Fill mask
+		/* Fill mask */
 		int j;
 		for (j=0;j<wxh;j++) {
 			if (aryDiagArea[j]!=0) {
@@ -275,7 +272,7 @@ public class MangaImgCell {
 			}
 		}
 
-		// Convert to graphic
+		/* Convert to graphic */
 		imgNewMask.setRGB(0, 0, wImg, hImg, buf_pic, 0, wImg);
 
 		retrieveOrg();
@@ -299,7 +296,7 @@ public class MangaImgCell {
 		
 		bChanged = true;
 
-		// Fill mask
+		/* Fill mask */
 		int j;
 		for (j=0;j<wxh;j++) {
 			if (aryBkgArea[j]==0) {
@@ -307,7 +304,7 @@ public class MangaImgCell {
 			}
 		}
 
-		// Convert to graphic
+		/* Convert to graphic */
 		cancelAllMasks();
 		retrieveOrg();
 		imgNewMask.setRGB(0, 0, wImg, hImg, buf_pic, 0, wImg);
@@ -399,11 +396,63 @@ public class MangaImgCell {
 		
 	}
 	
+	/* Zoom functions */
+	/**
+	 * Set the zoom factor
+	 * @param zf Zoom factor
+	 */
+	public void setZoomFactor(float zf) {
+		/* Zoom operations */
+		zoomFactor = (zf > 4F)? 4F: ((zf < 1/8F)? 1/64F : zf);
+	}
 	
+	/**
+	 * Auto fit according to the given width and height
+	 * @param w Width
+	 * @param h Height
+	 * @param opr Operation of the zoom action
+	 * 				0 - Fit the window (height)
+	 */
+	public void setZoomFactorWH(int w, int h, int opr) {
+		
+		float zf = 0;
+		
+		switch (opr)
+		{
+			case 0:
+			{
+				zf = ((float) h)/((float) hImg);
+				break;
+			}
+		}
+		
+		setZoomFactor(zf);
+	}
+	
+	/**
+	 * Zoom in image
+	 */
+	public void setZoomIn() {
+		setZoomFactor(zoomFactor * 1.25F);
+	}
+	
+	/**
+	 * Zoom out image
+	 */
+	public void setZoomOut() {
+		setZoomFactor(zoomFactor / 1.25F);
+	}
+	
+	/**
+	 * Get current zoom factor
+	 * @return Zoom factor
+	 */
+	public float getZoomFactor() {
+		return zoomFactor;
+	}
 	
 	/* Msc functions */
 
-	// Return WxH
 	public int getWidth() {
 		return wImg;
 	}
@@ -411,14 +460,6 @@ public class MangaImgCell {
 		return hImg;
 	}
 
-	// Zoom operations
-	public void setZoomFactor(float zf) {
-		zoomFactor = (zf > 4F)? 4F: ((zf < 1/8F)? 1/8F : zf);
-	}
-	public float getZoomFactor() {
-		return zoomFactor;
-	}
-	
 	@Override
 	public String toString() {
 		return strFileName;
