@@ -13,7 +13,7 @@ This is a light-weighted manga image processing app aiming at
 
 == Function List ==
 
- * Clean dialogue contents / 修图-对话框内容清理
+ * [CleanDiag Clean dialogue contents / 修图-对话框内容清理]
 
 == Screenshots ==
 Beta 0.2:
