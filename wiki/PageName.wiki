@@ -15,7 +15,7 @@ This is a light-weighted manga image processing app aiming at
 
 == Function List ==
 
- * [CleanDiag Clean dialogue contents]
+ * [CleanDiag Clean dialogue contents (Video Demo)]
 
 == Screenshots ==
 Beta 0.2:
