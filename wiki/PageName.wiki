@@ -14,3 +14,7 @@ This is a light-weighted manga image processing app aiming at
 == Function List ==
 
  * Clean dialogue contents / 修图-对话框内容清理
+
+== Screenshots ==
+Beta 0.2:
+https://lh4.googleusercontent.com/-OBdBaiJOoak/T7COqgTdg-I/AAAAAAAAJ3k/KqP1vN2vOJ4/s800/Beta0p2.PNG
