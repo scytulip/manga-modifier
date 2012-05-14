@@ -1,13 +1,16 @@
-#summary One-sentence summary of this page.
+#labels Manga,Introduction
+# JMangaMod - A fantastic tool for manga editors
 
 = Introduction =
 
-Add your content here.
+This is a light-weighted manga image processing app aiming at 
+ * reducing the work load of manga editors
+ * entertaining by modifying manga images
+ * modifying manga drafts faster
+
+轻量级漫画图片专用处理程序，旨在减轻各位技术宅们的负担（特别适合于漫画修图哦 ^_^）
 
 
-= Details =
+= Major functions =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+ * Clean dialogue contents / 修图-对话框内容清理
