@@ -13,6 +13,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.JOptionPane;
 import javax.swing.JViewport;
@@ -63,6 +64,7 @@ public class ImageView extends JViewport
         maxUnitIncrement = app_set.getIntMaxUnitIncrement();
     }
     
+    /* ============== File Operations ============== */
     /**
      * Repaint the display area
      * @param man MangaImgCell oject
@@ -73,7 +75,36 @@ public class ImageView extends JViewport
     	img_cell = man_cell.getOutputImage();
     	revalidate();
     }
+    
+    /**
+     * Save image file
+     * @param fp File name, when empty, save itself
+     */
+    public void saveImgFile(final String fp) {
+    	if (!bConLock) {
+    		
+			/* Create save image thread */
+			Runnable runnable=new Runnable(){  
+				@Override  
+				public void run() {
+					setBusy();
+					try {
+						man_cell.saveImgFile(fp);
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(
+								null, e.getMessage(), "Error", 
+								JOptionPane.ERROR_MESSAGE
+								);
+					}  	
+					unsetBusy();
+				}
+			};
+			new Thread(runnable).start();
+			
+    	}
+    }
  
+    /* ============ Actions ================= */
     /**
      * Action of wiping all marked dialogues
      */
@@ -319,7 +350,7 @@ public class ImageView extends JViewport
 	/**
 	 * Set concurrent lock and set cursor to waiting
 	 */
-	private void setBusy() {
+	public void setBusy() {
 		bConLock = true;
 		setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 	}
@@ -327,7 +358,7 @@ public class ImageView extends JViewport
 	/**
 	 * Cancel concurrent lock and reset cursor to default
 	 */
-	private void unsetBusy() {
+	public void unsetBusy() {
 		setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 		bConLock = false;
 	}

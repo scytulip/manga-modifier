@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
@@ -23,6 +24,7 @@ import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -44,8 +46,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import net.miginfocom.swing.MigLayout;
 import core_pack.AppSettings;
 import core_pack.MangaImgCell;
-
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Main_win {
 	
@@ -83,6 +85,7 @@ public class Main_win {
 	private final Action actZoomIn = new SwingAction_13();
 	private final Action actZoomOut = new SwingAction_14();
 	private final Action actFitWin = new SwingAction_15();
+	private final Action actAbout = new SwingAction_16();
 	
 	
 
@@ -94,6 +97,7 @@ public class Main_win {
 	 * @throws ClassNotFoundException 
 	 */
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+		   
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -143,7 +147,7 @@ public class Main_win {
 	    manga_pics = new DefaultListModel();
 	    		
 	    initialize();
-		
+	    
 	}
 
 	/**
@@ -154,11 +158,21 @@ public class Main_win {
 		actRedo.setEnabled(false);
 		actUndo.setEnabled(false);
 		frmMangaModifier = new JFrame();
+		frmMangaModifier.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		frmMangaModifier.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				if (closeAllFiles())
+				{
+					frmMangaModifier.dispose();
+				}
+			}
+		});
 		frmMangaModifier.setMinimumSize(new Dimension(600, 400));
 		frmMangaModifier.getContentPane().setMinimumSize(new Dimension(300, 300));
 		frmMangaModifier.setTitle(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.frmMangaModifier.title")); //$NON-NLS-1$ //$NON-NLS-2$
 		frmMangaModifier.setBounds(100, 100, 821, 687);
-		frmMangaModifier.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//frmMangaModifier.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmMangaModifier.getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		JToolBar toolBar = new JToolBar();
@@ -498,6 +512,48 @@ public class Main_win {
 		JMenu mnHelp = new JMenu(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mnHelp.text")); //$NON-NLS-1$ //$NON-NLS-2$
 		mnHelp.setMnemonic('H');
 		menuBar.add(mnHelp);
+		
+		JMenuItem mntmNewMenuItem = new JMenuItem(ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.mntmNewMenuItem.text_7")); //$NON-NLS-1$ //$NON-NLS-2$
+		mntmNewMenuItem.setAction(actAbout);
+		mnHelp.add(mntmNewMenuItem);
+	}
+	
+	/**
+	 * Close all image files
+	 */
+	private boolean closeAllFiles() {
+		int j, msg;
+		MangaImgCell img;
+		
+		for (j=0; j < manga_pics.getSize(); j++) {
+			img = (MangaImgCell) manga_pics.getElementAt(j);
+			if (img.isChanged())
+			{
+				msg = JOptionPane.showConfirmDialog(
+						frmMangaModifier, 
+						"File " + img.toString() + " is not saved. \n" +
+						"Yes - Save the image, No - Don't save, Cancel - Break the operation.", 
+						"File Operation", 
+						JOptionPane.YES_NO_CANCEL_OPTION
+						);
+				if (msg == JOptionPane.YES_OPTION) {
+					try {
+						img.saveImgFile("");
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(
+								null, e.getMessage(), "ERROR", 
+								JOptionPane.ERROR_MESSAGE
+						);
+					}
+				} else if (msg == JOptionPane.CANCEL_OPTION) {
+					return false;
+				}
+				img.setNull();
+			}
+		}
+		manga_pics.clear();
+		app_set.setFileClosed();
+		return true;
 	}
 
 	private class SwingAction extends AbstractAction {
@@ -515,12 +571,15 @@ public class Main_win {
 		}
 		public void actionPerformed(ActionEvent e) {
 			
+			if (!closeAllFiles()) return;
+			
 			int returnVal = filech.showOpenDialog(frmMangaModifier);
 			int j;
 			MangaImgCell manga_cell;
 			
 			if (returnVal == JFileChooser.APPROVE_OPTION)
 			{
+				
 				tabbedTools.setSelectedIndex(TAB_FILELIST);
 				
 				File[] img_list = filech.getSelectedFiles();
@@ -557,6 +616,7 @@ public class Main_win {
 			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actSaveImg.short description")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		public void actionPerformed(ActionEvent e) {
+			manga_vw.saveImgFile("");
 		}
 	}
 	private class SwingAction_1 extends AbstractAction {
@@ -615,6 +675,18 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_A);
 		}
 		public void actionPerformed(ActionEvent e) {
+			int returnVal = filech.showSaveDialog(frmMangaModifier);
+			
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+					try {
+						manga_vw.saveImgFile(filech.getSelectedFile().getCanonicalPath());
+					} catch (IOException e1) {
+						JOptionPane.showMessageDialog(
+								null, e1.getMessage(), "ERROR", 
+								JOptionPane.ERROR_MESSAGE
+						);
+					}
+			}
 		}
 	}
 	private class SwingAction_6 extends AbstractAction {
@@ -671,6 +743,23 @@ public class Main_win {
 			putValue(MNEMONIC_KEY, KeyEvent.VK_L);
 		}
 		public void actionPerformed(ActionEvent e) {
+			int j;
+			MangaImgCell man_cell;
+			
+			/* Iterate and save all images */
+			manga_vw.setBusy();
+			for (j=0; j < manga_pics.getSize(); j++) {
+				try {
+					man_cell = (MangaImgCell) manga_pics.getElementAt(j);
+					if (man_cell.isChanged()) man_cell.saveImgFile("");
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(
+							null, e1.getMessage(), "ERROR", 
+							JOptionPane.ERROR_MESSAGE
+					);
+				}
+			}
+			manga_vw.unsetBusy();
 		}
 	}
 	private class SwingAction_10 extends AbstractAction {
@@ -750,6 +839,20 @@ public class Main_win {
 		}
 		public void actionPerformed(ActionEvent e) {
 			manga_vw.setZoomFit(); // Auto fit
+		}
+	}
+	private class SwingAction_16 extends AbstractAction {
+		private static final long serialVersionUID = -4690787387112979995L;
+		public SwingAction_16() {
+			putValue(NAME, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actAbout.name")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(SHORT_DESCRIPTION, ResourceBundle.getBundle("gui_pack.LangPack").getString("Main_win.actAbout.short description")); //$NON-NLS-1$ //$NON-NLS-2$
+			putValue(MNEMONIC_KEY, KeyEvent.VK_A);
+		}
+		public void actionPerformed(ActionEvent e) {
+			JOptionPane.showMessageDialog(
+					null, "For more information, please visit\nhttps://code.google.com/p/manga-modifier/", "ABOUT", 
+					JOptionPane.INFORMATION_MESSAGE
+					);
 		}
 	}
 }

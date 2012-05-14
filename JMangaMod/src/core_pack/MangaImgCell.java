@@ -42,6 +42,8 @@ public class MangaImgCell {
 		bChanged = false;
 	}
 
+	/* ==== File Operation ==== */
+	
 	/**
 	 * Set the image file handle and read it into buffer.
 	 * @param img_file File object for read
@@ -54,7 +56,7 @@ public class MangaImgCell {
 			imgMangaOrg = ImageIO.read(img_file);
 			
 			/* Initialization */
-			bChanged = true;
+			bChanged = false;
 			strFilePath = img_file.getCanonicalPath();
 			strFileName = img_file.getName();
 
@@ -83,7 +85,35 @@ public class MangaImgCell {
 		}	
 
 	}
+	
+	/**
+	 * Save image to file. (ATTENTION: no applied operation will not be saved)
+	 * @param fp File name and path for "Save As"
+	 * @throws IOException Exception of IO operation
+	 */
+	public void saveImgFile(String fp) throws IOException {
+		
+		/* Prepare file name */
+		String fpath = strFilePath;
+		if (fp != "") {
+			fpath = fp;
+		}
+		
+		/* Get suffix for image format */
+		int mid= fpath.lastIndexOf(".");
+		String fmt_name=fpath.substring(mid+1,fpath.length());
+		
+		/* Write image */
+		ImageIO.write(imgMangaOrg, 
+				fmt_name.toLowerCase(), 
+				new File(fpath)
+		);
+		bChanged = false;
+		
+	}
 
+	/* ==== Wipe Diaglogue Contents ==== */
+	
 	/**
 	 * Calculate the manga dialogues' masks using region-filling algorithm
 	 * @param x X value of the clicked point
@@ -316,6 +346,8 @@ public class MangaImgCell {
 
 	}
 	
+	/* ==== Common Operation ===== */
+	
 	/**
 	 * Update original image with modified version
 	 * imgMangaOrg <- imgMangaMod
@@ -354,6 +386,8 @@ public class MangaImgCell {
 		bavBkg = false;
 		
 	}
+	
+	/* ==== Image Output ==== */
 
 	/**
 	 * Return the zoomed image for output
@@ -396,7 +430,7 @@ public class MangaImgCell {
 		
 	}
 	
-	/* Zoom functions */
+	/* ==== Zoom functions ==== */
 	/**
 	 * Set the zoom factor
 	 * @param zf Zoom factor
@@ -451,7 +485,7 @@ public class MangaImgCell {
 		return zoomFactor;
 	}
 	
-	/* Msc functions */
+	/* ====Msc functions==== */
 
 	public int getWidth() {
 		return wImg;
@@ -469,6 +503,12 @@ public class MangaImgCell {
 		return bChanged;
 	}
 
+	public void setNull() {
+		imgMangaOrg = null;
+		imgMangaMod = null;
+		imgNewMask = null;
+		bChanged = false;
+	}
 
 }
 
