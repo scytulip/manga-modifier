@@ -19,5 +19,6 @@ This is a light-weighted manga image processing app aiming at
 
 == Screenshots ==
 Beta 0.2:
+
 https://lh4.googleusercontent.com/-zcTy5XM5y28/T7CSGFoDLrI/AAAAAAAAJ34/_KnEq7Biog4/s640/Beta0p2_2.PNG
 https://lh6.googleusercontent.com/-Hz4kPi-JJYU/T7CSHer86rI/AAAAAAAAJ4A/2lgsAa3kpLo/s640/beta0p2_3.PNG
