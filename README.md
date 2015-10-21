@@ -8,6 +8,7 @@ This is a light-weighted manga image processing app aiming at
  * modifying manga drafts faster
 
 == Setup ==
+
  Please first download and install Java JRE 7:
 
  http://www.oracle.com/technetwork/java/javase/downloads/jre-7u4-download-1591157.html
