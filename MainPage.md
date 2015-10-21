@@ -1,0 +1,26 @@
+# JMangaMod - A fantastic tool for manga editors #
+
+## Introduction ##
+
+This is a light-weighted manga image processing app aiming at
+  * reducing the work load of manga editors
+  * entertaining by modifying manga images
+  * modifying manga drafts faster
+
+## Setup ##
+> Please first download and install Java JRE 7:
+
+> http://www.oracle.com/technetwork/java/javase/downloads/jre-7u4-download-1591157.html
+
+> Download the newest version .jar and double click it to run.
+
+
+## Function List ##
+
+  * [Clean dialogue contents (Video Demo)](CleanDiag.md)
+
+## Screenshots ##
+Beta 0.2:
+
+https://lh4.googleusercontent.com/-zcTy5XM5y28/T7CSGFoDLrI/AAAAAAAAJ34/_KnEq7Biog4/s640/Beta0p2_2.PNG
+https://lh6.googleusercontent.com/-Hz4kPi-JJYU/T7CSHer86rI/AAAAAAAAJ4A/2lgsAa3kpLo/s640/beta0p2_3.PNG
